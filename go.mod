@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/containerd/containerd v1.6.4
-	github.com/davecgh/go-spew v1.1.1
 	github.com/deepch/vdk v0.0.0-20220427205959-7d87dbe2ddda
 	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/stdr v1.2.2
@@ -12,7 +11,7 @@ require (
 	github.com/innoai-tech/infra v0.0.0-20220429051008-d9b368838461
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/pkg/errors v0.9.1
-	github.com/smartystreets/assertions v1.2.0
+	github.com/smartystreets/assertions v1.13.0
 	github.com/smartystreets/goconvey v1.7.2
 	golang.org/x/exp v0.0.0-20220428152302-39d4317da171
 )
