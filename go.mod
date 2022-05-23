@@ -11,7 +11,7 @@ require (
 	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/stdr v1.2.2
 	github.com/gorilla/mux v1.8.0
-	github.com/gorilla/websocket v1.4.2
+	github.com/gorilla/websocket v1.5.0
 	github.com/innoai-tech/infra v0.0.0-20220429051008-d9b368838461
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/octohelm/x v0.0.0-20220516041619-03d803d0863a
