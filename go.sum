@@ -106,8 +106,8 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/deepch/vdk v0.0.16 h1:NvC4dZdflaT6x20hIZGBDl//CmQfVm5b2Ap7p0eX+/8=
-github.com/deepch/vdk v0.0.16/go.mod h1:KqQ/KU3hOc4a62l/jPRH5Hiz5fhTq5cGCl8IqeCxWQI=
+github.com/deepch/vdk v0.0.17 h1:FbNgJ3DVHRuMoVCUFcKAwAQ+EBfgP8nygVbg+fiqUAY=
+github.com/deepch/vdk v0.0.17/go.mod h1:KqQ/KU3hOc4a62l/jPRH5Hiz5fhTq5cGCl8IqeCxWQI=
 github.com/dennwc/varint v1.0.0 h1:kGNFFSSw8ToIy3obO/kKr8U9GZYUAxQEVuix4zfDWzE=
 github.com/dennwc/varint v1.0.0/go.mod h1:hnItb35rvZvJrbTALZtY/iQfDs48JKRG1RPpgziApxA=
 github.com/dgraph-io/badger v1.6.0/go.mod h1:zwt7syl517jmP8s94KqSxTlM6IMsdhYy6psNgSztDR4=
