@@ -19,8 +19,8 @@ require (
 	github.com/octohelm/x v0.0.0-20220516041619-03d803d0863a
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/common v0.34.0
-	github.com/prometheus/prometheus v0.36.0
+	github.com/prometheus/common v0.35.0
+	github.com/prometheus/prometheus v0.36.2
 	github.com/rs/cors v1.8.2
 	golang.org/x/exp v0.0.0-20220602145555-4a0574d9293f
 )
