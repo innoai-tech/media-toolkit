@@ -103,7 +103,10 @@ actions: go: golang.#Project & {
 	version:  actions.version.output
 	revision: "\(client.env.GIT_SHA)"
 
-	cgo: true
+	// when disable cross-gcc will be installed
+	isolate: false
+	cgo:     true
+
 	goos: ["linux"]
 	goarch: ["amd64", "arm64"]
 	main: "./cmd/mtk"
@@ -135,6 +138,12 @@ actions: go: golang.#Project & {
 			"mirror": mirror
 			"steps": [
 				crutil.#ImageDep & {
+					// for cross compile need to load .so for all platforms
+					"platforms": [
+						for arch in goarch {
+							"linux/\(arch)"
+						},
+					]
 					"dependences": dependences
 					"auth":        auth
 				},

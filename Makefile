@@ -43,6 +43,37 @@ serve.debug:
 		-p=777:777 \
 		ghcr.io/innoai-tech/media-toolkit:dev -v1 serve -c .tmp/streams.json
 
+devkit:
+	dagger do go devkit load arm64
+
+dev:
+	docker run \
+		-it \
+		-v=$(shell go env GOMODCACHE):/go/src/mod \
+		-v=$(PWD):/go/src \
+		-w=/go/src \
+		github.com/innoai-tech/media-toolkit:devkit-arm64
+
+xx.amd64:
+	CC=x86_64-linux-gnu-gcc \
+	CXX=x86_64-linux-gnu-g++ \
+	CGO_ENABLED=1 \
+	GOARCH=amd64  \
+	go build \
+		-ldflags="-linkmode=external" \
+		-o build/mtk-linux-amd64 \
+		./cmd/mtk
+
+xx.arm64:
+	CC=aarch64-linux-gnu-gcc \
+	CXX=aarch64-linux-gnu-g++ \
+	CGO_ENABLED=1 \
+    GOARCH=arm64  \
+	go build \
+		-ldflags="-linkmode=external" \
+		-o build/mtk-linux-arm64 \
+		./cmd/mtk
+
 fmt:
 	goimports -w ./cmd/
 	goimports -w ./pkg/
