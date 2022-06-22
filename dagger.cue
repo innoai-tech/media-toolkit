@@ -7,9 +7,9 @@ import (
 	"dagger.io/dagger/core"
 
 	"github.com/innoai-tech/runtime/cuepkg/tool"
-	"github.com/innoai-tech/runtime/cuepkg/crutil"
 	"github.com/innoai-tech/runtime/cuepkg/node"
 	"github.com/innoai-tech/runtime/cuepkg/golang"
+	"github.com/innoai-tech/runtime/cuepkg/imagetool"
 )
 
 dagger.#Plan
@@ -30,22 +30,21 @@ client: env: {
 	CONTAINER_REGISTRY_PULL_PROXY: string | *""
 }
 
-client: filesystem: "build/output": write: contents: actions.go.archive.output
-client: network: "unix:///var/run/docker.sock": connect: dagger.#Socket
-
 actions: version: tool.#ResolveVersion & {
 	ref:     "\(client.env.GIT_REF)"
 	version: "\(client.env.VERSION)"
 }
 
-mirror: {
-	linux: client.env.LINUX_MIRROR
-	pull:  client.env.CONTAINER_REGISTRY_PULL_PROXY
+auths: {
+	"ghcr.io": {
+		username: "\(client.env.GH_USERNAME)"
+		secret:   client.env.GH_PASSWORD
+	}
 }
 
-auth: {
-	username: client.env.GH_USERNAME
-	secret:   client.env.GH_PASSWORD
+mirror: {
+	linux: "\(client.env.LINUX_MIRROR)"
+	pull:  "\(client.env.CONTAINER_REGISTRY_PULL_PROXY)"
 }
 
 actions: liveplayer: node.#ViteProject & {
@@ -68,13 +67,14 @@ actions: liveplayer: node.#ViteProject & {
 		]
 		image: {
 			"mirror": mirror
+			"auths":  auths
 			steps: [
 				node.#ConfigPrivateRegistry & {
 					scope: "@innoai-tech"
 					host:  "npm.pkg.github.com"
 					token: client.env.GH_PASSWORD
 				},
-				crutil.#Script & {
+				imagetool.#Script & {
 					run: [
 						"npm i -g pnpm",
 					]
@@ -100,7 +100,7 @@ actions: go: golang.#Project & {
 		]
 	}
 
-	version:  actions.version.output
+	version:  "\(actions.version.output)"
 	revision: "\(client.env.GIT_SHA)"
 
 	// when disable cross-gcc will be installed
@@ -135,44 +135,50 @@ actions: go: golang.#Project & {
 			"go mod download",
 		]
 		image: {
-			"mirror": mirror
-			"steps": [
-				crutil.#ImageDep & {
+			steps: [
+				imagetool.#ImageDep & {
 					// for cross compile need to load .so for all platforms
-					"platforms": [
-						for arch in goarch {
-							"linux/\(arch)"
-						},
-					]
+					"platforms": [ for arch in goarch {
+						"linux/\(arch)"
+					}]
 					"dependences": dependences
-					"auth":        auth
-				},
-			]
-		}
-	}
-
-	devkit: load: host: client.network."unix:///var/run/docker.sock".connect
-
-	ship: {
-		name: "\(strings.Replace(go.module, "github.com/", "ghcr.io/", -1))"
-
-		image: {
-			"source": "gcr.io/distroless/cc-debian11:debug"
-			"mirror": mirror
-			"steps": [
-				crutil.#ImageDep & {
-					"dependences": dependences
-					"auth":        auth
+					"auths":       auths
 					"mirror":      mirror
 				},
 			]
 		}
+	}
+
+	ship: {
+		name: "\(strings.Replace(go.module, "github.com/", "ghcr.io/", -1))"
+
+		from: "gcr.io/distroless/cc-debian11:debug"
+		steps: [
+			imagetool.#ImageDep & {
+				"dependences": dependences
+				"auths":       auths
+				"mirror":      mirror
+			},
+		]
 
 		config: {
 			cmd: ["serve"]
 		}
-
-		push: "auth": auth
-		load: host:   client.network."unix:///var/run/docker.sock".connect
 	}
+
+	build: image: {
+		"auths":  auths
+		"mirror": mirror
+	}
+
+	ship: {
+		"auths":  auths
+		"mirror": mirror
+	}
+
+	devkit: load: host: client.network."unix:///var/run/docker.sock".connect
+	ship: load: host:   client.network."unix:///var/run/docker.sock".connect
 }
+
+client: filesystem: "build/output": write: contents: actions.go.archive.output
+client: network: "unix:///var/run/docker.sock": connect: dagger.#Socket
