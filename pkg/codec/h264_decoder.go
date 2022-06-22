@@ -9,13 +9,13 @@ import (
 )
 
 /*
-	#cgo amd64 CFLAGS: -I/usr/pkg/ffmpeg/amd64/include
-	#cgo amd64 LDFLAGS: -Wl,-rpath=/usr/pkg/ffmpeg/amd64/lib
-	#cgo amd64 LDFLAGS: -L/usr/pkg/ffmpeg/amd64/lib
+	#cgo amd64 CFLAGS: -I/usr/local/pkg/ffmpeg/amd64/include
+	#cgo amd64 LDFLAGS: -Wl,-rpath=/usr/local/pkg/ffmpeg/amd64/lib
+	#cgo amd64 LDFLAGS: -L/usr/local/pkg/ffmpeg/amd64/lib
 
-	#cgo arm64 CFLAGS: -I/usr/pkg/ffmpeg/arm64/include
-	#cgo arm64 LDFLAGS: -Wl,-rpath=/usr/pkg/ffmpeg/arm64/lib
-	#cgo arm64 LDFLAGS: -L/usr/pkg/ffmpeg/arm64/lib
+	#cgo arm64 CFLAGS: -I/usr/local/pkg/ffmpeg/arm64/include
+	#cgo arm64 LDFLAGS: -Wl,-rpath=/usr/local/pkg/ffmpeg/arm64/lib
+	#cgo arm64 LDFLAGS: -L/usr/local/pkg/ffmpeg/arm64/lib
 
 	#cgo LDFLAGS: -lavutil -lavcodec -lavformat
 	#include <libavcodec/avcodec.h>
