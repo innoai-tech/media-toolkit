@@ -48,7 +48,7 @@ actions: {
 	}
 
 	dependences: {
-		"ghcr.io/innoai-tech/ffmpeg": "5@sha256:4fec165c0870e6ebc735b874e7fe0a6e1ac6c0d09591d84fbb1cc98b3e7e44fd"
+		"ghcr.io/innoai-tech/ffmpeg": "5"
 	}
 
 	liveplayer: node.#ViteProject & {
@@ -87,9 +87,6 @@ actions: {
 				]
 			}
 		}
-
-		ship: name: ""
-		ship: tag:  ""
 	}
 
 	go: golang.#Project & {
