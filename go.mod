@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/cockroachdb/pebble v0.0.0-20220616214320-059c072fd94a
 	github.com/containerd/containerd v1.6.6
-	github.com/deepch/vdk v0.0.17
+	github.com/deepch/vdk v0.0.18
 	github.com/go-courier/courier v1.5.0
 	github.com/go-courier/httptransport v1.21.11
 	github.com/go-courier/statuserror v1.2.1
@@ -70,7 +70,6 @@ require (
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
 	golang.org/x/tools v0.1.11 // indirect
-	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/genproto v0.0.0-20220617124728-180714bec0ad // indirect
 	google.golang.org/grpc v1.47.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
