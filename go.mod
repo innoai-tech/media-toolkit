@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/cockroachdb/pebble v0.0.0-20220906142723-ade651d00072
 	github.com/containerd/containerd v1.6.8
-	github.com/deepch/vdk v0.0.19
+	github.com/deepch/vdk v0.0.20-0.20220804181138-61aa8e4f724c
 	github.com/go-courier/courier v1.5.0
 	github.com/go-courier/httptransport v1.21.11
 	github.com/go-courier/statuserror v1.2.1

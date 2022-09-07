@@ -2,16 +2,14 @@ package livestream
 
 import (
 	"context"
-	_ "embed"
 	"fmt"
 	"io"
 	"sync"
 	"time"
 
-	"github.com/go-logr/logr"
-
 	"github.com/deepch/vdk/av"
 	"github.com/deepch/vdk/format/rtspv2"
+	"github.com/go-logr/logr"
 	"github.com/innoai-tech/media-toolkit/pkg/util/syncutil"
 	"github.com/pkg/errors"
 )
@@ -211,11 +209,12 @@ type rtspWorker struct {
 
 func (s *rtspWorker) dial(rtspURL string) (*rtspv2.RTSPClient, error) {
 	return rtspv2.Dial(rtspv2.RTSPClientOptions{
-		URL:              rtspURL,
-		DialTimeout:      5 * time.Second,
-		ReadWriteTimeout: 5 * time.Second,
-		DisableAudio:     true,
-		Debug:            false,
+		URL:                rtspURL,
+		DialTimeout:        10 * time.Second,
+		ReadWriteTimeout:   10 * time.Second,
+		DisableAudio:       true,
+		InsecureSkipVerify: true,
+		Debug:              false,
 	})
 }
 
@@ -232,8 +231,8 @@ func (s *rtspWorker) serve(rtspURL string, observer StreamNotifier, getMeta func
 		c.Close()
 	}()
 
-	idleTimeout := 20 * time.Second
-	keyTimeout := 20 * time.Second
+	idleTimeout := 60 * time.Second
+	keyTimeout := 30 * time.Second
 
 	keyTimer := time.NewTimer(keyTimeout)
 	idleTimer := time.NewTimer(idleTimeout)
@@ -242,8 +241,10 @@ func (s *rtspWorker) serve(rtspURL string, observer StreamNotifier, getMeta func
 
 	codecData := c.CodecData
 	if codecData != nil {
-		if len(codecData) == 1 && codecData[0].Type().IsAudio() {
-			audioOnly = true
+		if len(codecData) == 1 {
+			if codecData[0].Type().IsAudio() {
+				audioOnly = true
+			}
 		}
 	}
 

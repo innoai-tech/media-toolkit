@@ -2,22 +2,22 @@ package image
 
 import (
 	"context"
+	"github.com/deepch/vdk/codec/h265parser"
 	"image/jpeg"
 	"io"
 	"strconv"
 	"time"
 
+	"github.com/deepch/vdk/codec/h264parser"
+	"github.com/go-logr/logr"
 	"github.com/innoai-tech/media-toolkit/pkg/blob"
-	"github.com/innoai-tech/media-toolkit/pkg/codec"
+	imagecodec "github.com/innoai-tech/media-toolkit/pkg/codec/image"
+	"github.com/innoai-tech/media-toolkit/pkg/livestream"
 	"github.com/innoai-tech/media-toolkit/pkg/storage"
 	"github.com/innoai-tech/media-toolkit/pkg/storage/mime"
 	"github.com/innoai-tech/media-toolkit/pkg/types"
 	"github.com/innoai-tech/media-toolkit/pkg/util/syncutil"
 	"github.com/pkg/errors"
-
-	"github.com/deepch/vdk/codec/h264parser"
-	"github.com/go-logr/logr"
-	"github.com/innoai-tech/media-toolkit/pkg/livestream"
 )
 
 type Options struct {
@@ -56,15 +56,23 @@ func (w *imageWriter) Name() string {
 
 func (w *imageWriter) WritePacket(pkt livestream.Packet) {
 	for _, c := range pkt.Codecs {
-		if cd, ok := c.(h264parser.CodecData); ok {
-			if pkt.IsKeyFrame {
-				go w.takePic(&cd, &pkt)
+		// FIXME cache key frames and merge them
+		if pkt.IsKeyFrame {
+			switch x := c.(type) {
+			case h264parser.CodecData:
+				go w.takePic(func() (imagecodec.Decoder, error) {
+					return imagecodec.NewH264Decoder(x.Record)
+				}, &pkt)
+			case h265parser.CodecData:
+				go w.takePic(func() (imagecodec.Decoder, error) {
+					return imagecodec.NewH265Decoder(x.Record)
+				}, &pkt)
 			}
 		}
 	}
 }
 
-func (w *imageWriter) takePic(codecData *h264parser.CodecData, pkt *livestream.Packet) (e error) {
+func (w *imageWriter) takePic(newDecoder func() (imagecodec.Decoder, error), pkt *livestream.Packet) (e error) {
 	defer func() {
 		if e != nil {
 			w.l.Error(e, "take pic")
@@ -72,13 +80,13 @@ func (w *imageWriter) takePic(codecData *h264parser.CodecData, pkt *livestream.P
 		w.SendDone(e)
 	}()
 
-	decoder, err := codec.NewH264Decoder(codecData.Record)
+	decoder, err := newDecoder()
 	if err != nil {
 		return err
 	}
 	defer decoder.Close()
 
-	img, err := decoder.Decode(pkt.Data)
+	img, err := decoder.DecodeToImage(pkt.Data)
 	if err != nil {
 		return errors.Wrap(err, "decode failed")
 	}

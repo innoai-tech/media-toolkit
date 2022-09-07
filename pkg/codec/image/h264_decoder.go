@@ -1,4 +1,4 @@
-package codec
+package image
 
 import (
 	"errors"
@@ -95,7 +95,7 @@ func (m *H264Decoder) Close() error {
 	return nil
 }
 
-func (m *H264Decoder) Decode(nal []byte) (f *image.YCbCr, err error) {
+func (m *H264Decoder) DecodeToImage(nal []byte) (f *image.YCbCr, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			if ee, ok := e.(error); ok {

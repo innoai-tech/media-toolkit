@@ -56,6 +56,7 @@ func (w *wsmp4f) WritePacket(pkt livestream.Packet) {
 		if pkt.IsKeyFrame {
 			_ = w.once.Do(func() error {
 				muxer := mp4f.NewMuxer(nil)
+
 				if err := muxer.WriteHeader(codecs); err != nil {
 					w.l.Error(err, "muxer.WriteHeader")
 					return err
@@ -81,7 +82,11 @@ func (w *wsmp4f) WritePacket(pkt livestream.Packet) {
 							w.l.Error(err, "write packet failed")
 						}
 						if ready {
-							metaBuf, _ := json.Marshal(p.Metadata)
+							metaBuf, err := json.Marshal(p.Metadata)
+							if err != nil {
+								w.l.Error(err, "Marshal metadata")
+								return
+							}
 							if _, err := w.w.Write(BufTypeMetadata.Build(metaBuf)); err != nil {
 								w.l.Error(err, "Write metadata")
 								return

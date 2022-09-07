@@ -11,7 +11,7 @@ build:
 .PHONY: build
 
 ship:
-#	dagger do webapp build
+	dagger do webapp build
 	dagger do go ship pushx
 
 dep.web:
@@ -31,8 +31,8 @@ MTK = go run ./cmd/mtk
 dep:
 	go get -u -t ./pkg/...
 
-serve: tidy
-	$(MTK) -v1 serve -c .tmp/streams.json
+serve:
+	CGO_ENABLED=1 $(MTK) -v1 serve -c .tmp/streams.json
 
 serve.debug:
 	docker run \
@@ -50,6 +50,7 @@ dev:
 		-v=$(shell go env GOMODCACHE):/go/src/mod \
 		-v=$(PWD):/go/src \
 		-w=/go/src \
+		-p=777:777 \
 		github.com/innoai-tech/media-toolkit:devkit-arm64
 
 xx.amd64:

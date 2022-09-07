@@ -93,11 +93,7 @@ actions: webapp: node.#Project & {
 }
 
 client: filesystem: "build/output": write: contents: actions.go.archive.output
-
 actions: go: golang.#Project & {
-	"auths":  auths
-	"mirror": mirror
-
 	source: {
 		path: "."
 		include: [
@@ -165,8 +161,10 @@ actions: go: golang.#Project & {
 		}
 	}
 
+	"auths":  auths
+	"mirror": mirror
+
 	devkit: load: host: client.network."unix:///var/run/docker.sock".connect
-	ship: load: host:   client.network."unix:///var/run/docker.sock".connect
 }
 
 client: network: "unix:///var/run/docker.sock": connect: dagger.#Socket
