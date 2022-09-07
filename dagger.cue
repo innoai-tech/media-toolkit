@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"dagger.io/dagger"
-	"dagger.io/dagger/core"
 
 	"github.com/innoai-tech/runtime/cuepkg/tool"
 	"github.com/innoai-tech/runtime/cuepkg/node"
@@ -30,149 +29,144 @@ client: env: {
 	CONTAINER_REGISTRY_PULL_PROXY: string | *""
 }
 
-helper: {
-	auths: "ghcr.io": {
-		username: client.env.GH_USERNAME
-		secret:   client.env.GH_PASSWORD
+actions: version: tool.#ResolveVersion & {
+	ref:     "\(client.env.GIT_REF)"
+	version: "\(client.env.VERSION)"
+}
+
+auths: "ghcr.io": {
+	username: client.env.GH_USERNAME
+	secret:   client.env.GH_PASSWORD
+}
+
+mirror: {
+	linux: client.env.LINUX_MIRROR
+	pull:  client.env.CONTAINER_REGISTRY_PULL_PROXY
+}
+
+dependencies: {
+	"ghcr.io/innoai-tech/ffmpeg": "5"
+}
+
+client: filesystem: "internal": write: contents: actions.webapp.build.output
+actions: webapp: node.#Project & {
+	source: {
+		path: "."
+		include: [
+			"webapp/",
+			"nodepkg/",
+			".npmrc",
+			"pnpm-*.yaml",
+			"*.json",
+		]
+		exclude: [
+			"node_modules/",
+		]
 	}
-	mirror: {
-		linux: client.env.LINUX_MIRROR
-		pull:  client.env.CONTAINER_REGISTRY_PULL_PROXY
+
+	env: "CI": "true"
+
+	build: {
+		outputs: {
+			"liveplayer/dist": "webapp/live-player/dist"
+		}
+		pre: [
+			"pnpm install",
+		]
+		script: "pnpm exec turbo run build"
+		image: {
+			"mirror": mirror
+			"steps": [
+				node.#ConfigPrivateRegistry & {
+					scope: "@innoai-tech"
+					host:  "npm.pkg.github.com"
+					token: client.env.GH_PASSWORD
+				},
+				imagetool.#Script & {
+					run: [
+						"npm i -g pnpm",
+					]
+				},
+			]
+		}
 	}
 }
 
-actions: {
-	version: tool.#ResolveVersion & {
-		ref:     "\(client.env.GIT_REF)"
-		version: "\(client.env.VERSION)"
-	}
+client: filesystem: "build/output": write: contents: actions.go.archive.output
 
-	dependences: {
-		"ghcr.io/innoai-tech/ffmpeg": "5"
-	}
+actions: go: golang.#Project & {
+	"auths":  auths
+	"mirror": mirror
 
-	liveplayer: node.#ViteProject & {
-		auths:  helper.auths
-		mirror: helper.mirror
-
-		source: {
-			path: "."
-			include: [
-				"webapp/",
-				"package.json",
-				"pnpm-lock.yaml",
-				"tsconfig.json",
-				"vite.config.ts",
-			]
-		}
-
-		env: APP: "live-player"
-
-		build: {
-			pre: [
-				"pnpm install",
-			]
-			image: {
-				steps: [
-					node.#ConfigPrivateRegistry & {
-						scope: "@innoai-tech"
-						host:  "npm.pkg.github.com"
-						token: client.env.GH_PASSWORD
-					},
-					imagetool.#Script & {
-						run: [
-							"npm i -g pnpm",
-						]
-					},
-				]
-			}
-		}
-	}
-
-	go: golang.#Project & {
-		auths:  helper.auths
-		mirror: helper.mirror
-
-		source: {
-			path: "."
-			include: [
-				"cmd/",
-				"pkg/",
-				"internal/",
-				"go.mod",
-				"go.sum",
-			]
-		}
-
-		version:  "\(actions.version.output)"
-		revision: "\(client.env.GIT_SHA)"
-
-		// when disable cross-gcc will be installed
-		isolate: false
-		cgo:     true
-
-		goos: ["linux"]
-		goarch: ["amd64", "arm64"]
-		main: "./cmd/mtk"
-		ldflags: [
-			"-s -w",
-			"-X \(go.module)/pkg/version.Version=\(go.version)",
-			"-X \(go.module)/pkg/version.Revision=\(go.revision)",
+	source: {
+		path: "."
+		include: [
+			"cmd/",
+			"pkg/",
+			"internal/",
+			"go.mod",
+			"go.sum",
 		]
+	}
 
-		mounts: {
-			webui: core.#Mount & {
-				contents: liveplayer.build.output.rootfs
-				source:   "/output"
-				dest:     "\(go.workdir)/internal/liveplayer/dist"
-			}
-		}
+	version:  "\(actions.version.output)"
+	revision: "\(client.env.GIT_SHA)"
 
-		env: {
-			GOPROXY:   client.env.GOPROXY
-			GOPRIVATE: client.env.GOPRIVATE
-			GOSUMDB:   client.env.GOSUMDB
-		}
+	// when disable cross-gcc will be installed
+	isolate: false
+	cgo:     true
 
-		build: {
-			pre: [
-				"go mod download",
-			]
-			image: {
-				steps: [
-					imagetool.#ImageDep & {
-						// for cross compile need to load .so for all platforms
-						"platforms": [ for arch in goarch {
-							"linux/\(arch)"
-						}]
-						"dependences": dependences
-						"auths":       helper.auths
-						"mirror":      helper.mirror
-					},
-				]
-			}
-		}
+	goos: ["linux"]
+	goarch: ["amd64", "arm64"]
+	main: "./cmd/mtk"
+	ldflags: [
+		"-s -w",
+		"-X \(go.module)/pkg/version.Version=\(go.version)",
+		"-X \(go.module)/pkg/version.Revision=\(go.revision)",
+	]
 
-		ship: {
-			name: "\(strings.Replace(go.module, "github.com/", "ghcr.io/", -1))"
+	env: {
+		GOPROXY:   client.env.GOPROXY
+		GOPRIVATE: client.env.GOPRIVATE
+		GOSUMDB:   client.env.GOSUMDB
+	}
 
-			from: "gcr.io/distroless/cc-debian11:debug"
+	build: {
+		pre: [
+			"go mod download",
+		]
+		image: {
 			steps: [
 				imagetool.#ImageDep & {
-					"dependences": dependences
-					"auths":       helper.auths
-					"mirror":      helper.mirror
+					// for cross compile need to load .so for all platforms
+					"platforms": [ for arch in goarch {
+						"linux/\(arch)"
+					}]
+					"dependencies": dependencies
+					"auths":        auths
+					"mirror":       mirror
 				},
 			]
-			config: {
-				cmd: ["serve"]
-			}
 		}
-
-		devkit: load: host: client.network."unix:///var/run/docker.sock".connect
-		ship: load: host:   client.network."unix:///var/run/docker.sock".connect
 	}
+
+	ship: {
+		name: "\(strings.Replace(go.module, "github.com/", "ghcr.io/", -1))"
+		from: "gcr.io/distroless/cc-debian11:debug"
+		steps: [
+			imagetool.#ImageDep & {
+				"dependencies": dependencies
+				"auths":        auths
+				"mirror":       mirror
+			},
+		]
+		config: {
+			cmd: ["serve"]
+		}
+	}
+
+	devkit: load: host: client.network."unix:///var/run/docker.sock".connect
+	ship: load: host:   client.network."unix:///var/run/docker.sock".connect
 }
 
 client: network: "unix:///var/run/docker.sock": connect: dagger.#Socket
-client: filesystem: "build/output": write: contents: actions.go.archive.output

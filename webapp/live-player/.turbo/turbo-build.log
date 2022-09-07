@@ -1,0 +1,14 @@
+[35m@innoai-tech/live-player:build[0m: cache hit, replaying output [2m1262823811973f00[0m
+[35m@innoai-tech/live-player:build: [0m
+[35m@innoai-tech/live-player:build: [0m> @innoai-tech/live-player@ build /Users/morlay/src/github.com/innoai-tech/media-toolkit/webapp/live-player
+[35m@innoai-tech/live-player:build: [0m> vite build --mode=production --config=vite.config.ts
+[35m@innoai-tech/live-player:build: [0m
+[35m@innoai-tech/live-player:build: [0mvite v3.1.0 building for production...
+[35m@innoai-tech/live-player:build: [0mtransforming...
+[35m@innoai-tech/live-player:build: [0m✓ 13405 modules transformed.
+[35m@innoai-tech/live-player:build: [0mrendering chunks...
+[35m@innoai-tech/live-player:build: [0m../dist/index.html                          0.76 KiB
+[35m@innoai-tech/live-player:build: [0m../dist/assets/index.f37a4e2f.js            43.39 KiB / gzip: 11.28 KiB
+[35m@innoai-tech/live-player:build: [0m../dist/assets/vendor~utils.a152ebbc.js     123.92 KiB / gzip: 34.04 KiB
+[35m@innoai-tech/live-player:build: [0m../dist/assets/vendor~styling.5484bdd0.js   259.90 KiB / gzip: 80.50 KiB
+[35m@innoai-tech/live-player:build: [0m../dist/assets/vendor~core.768e4d09.js      260.08 KiB / gzip: 93.82 KiB

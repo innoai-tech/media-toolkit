@@ -1,32 +1,30 @@
 export GIT_SHA ?= $(shell git rev-parse HEAD)
 export GIT_REF ?= HEAD
 
-DAGGER = dagger --log-format=plain -p ./
-
 debug:
 	cd ../../dagger/dagger && go install ./cmd/dagger
 	dagger do build web
 .PHONY: debug
 
 build:
-	$(DAGGER) do build
+	dagger do build
 .PHONY: build
 
-push:
-	$(DAGGER) do push
-.PHONY: push
+ship:
+#	dagger do webapp build
+	dagger do go ship pushx
 
-web.dep:
+dep.web:
 	 pnpm install
 
-web.dev:
-	./node_modules/.bin/vite --config=vite.config.ts
+dev.web:
+	cd webapp/live-player && pnpm run dev
 
-web.build:
-	./node_modules/.bin/vite build  --mode=production --config=vite.config.ts
+build.web:
+	pnpm exec turbo run build --force
 
-web.fmt:
-	 ./node_modules/.bin/prettier -w ./webapp
+lint.web:
+	pnpm exec turbo run lint --force
 
 MTK = go run ./cmd/mtk
 
@@ -44,7 +42,7 @@ serve.debug:
 		ghcr.io/innoai-tech/media-toolkit:dev -v1 serve -c .tmp/streams.json
 
 devkit:
-	dagger do go devkit load arm64
+	dagger do go devkit load/linux/arm64
 
 dev:
 	docker run \

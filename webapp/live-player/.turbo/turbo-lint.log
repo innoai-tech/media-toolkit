@@ -1,0 +1,7 @@
+[35m@innoai-tech/live-player:lint[0m: cache hit, replaying output [2mc8ef961c6a6a845d[0m
+[35m@innoai-tech/live-player:lint: [0m
+[35m@innoai-tech/live-player:lint: [0m> @innoai-tech/live-player@ lint /Users/morlay/src/github.com/innoai-tech/media-toolkit/webapp/live-player
+[35m@innoai-tech/live-player:lint: [0m> rome check --apply-suggested ./src && rome format --write ./src
+[35m@innoai-tech/live-player:lint: [0m
+[35m@innoai-tech/live-player:lint: [0mFixed 12 files in 16ms
+[35m@innoai-tech/live-player:lint: [0mFormatted 23 files in 9ms

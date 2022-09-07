@@ -4,3 +4,6 @@ webapp/dist
 build/
 dist/
 node_modules/
+
+*.iml
+.swc/

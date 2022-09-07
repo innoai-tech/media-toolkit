@@ -26,7 +26,7 @@ func TestDBWR(t *testing.T) {
 	})
 
 	Expect(t, err, Be[error](nil))
-	defer ic.Stop()
+	defer ic.Shutdown(context.Background())
 
 	entry := index.Entry{
 		TableName:  "test",
@@ -79,7 +79,7 @@ func TestDBReload(t *testing.T) {
 		Directory: workingDir,
 	})
 	Expect(t, err, Be[error](nil))
-	defer ic.Stop()
+	defer ic.Shutdown(context.Background())
 
 	t.Run("Given dbs", func(t *testing.T) {
 		testDb1 := "test1"
@@ -141,12 +141,12 @@ func TestBoltDB_GetDB(t *testing.T) {
 	Expect(t, db, Not(Be[*DB](nil)))
 
 	// recreate index client to check whether we can read already created test1 db without writing first
-	ic.Stop()
+	ic.Shutdown(context.Background())
 	ic, err = NewIndexClient(DBConfig{
 		Directory: workingDir,
 	})
 	Expect(t, err, Be[error](nil))
-	defer ic.Stop()
+	defer ic.Shutdown(context.Background())
 
 	_, err = ic.(*indexClient).GetDB(testDb1, DBOperationRead)
 	Expect(t, err, Be[error](nil))

@@ -186,10 +186,12 @@ func (b *indexClient) GetDB(name string, operation int) (*pebble.DB, error) {
 	// Set Timeout to avoid obtaining file lock wait indefinitely.
 	db, err := pebble.Open(path.Join(b.root, name), &pebble.Options{
 		// https://github.com/cockroachdb/pebble/issues/1068#issuecomment-784208214
-		L0CompactionThreshold:       2,
-		L0StopWritesThreshold:       1000,
-		LBaseMaxBytes:               64 << 20, // 64 MB
-		MaxConcurrentCompactions:    3,
+		L0CompactionThreshold: 2,
+		L0StopWritesThreshold: 1000,
+		LBaseMaxBytes:         64 << 20, // 64 MB
+		MaxConcurrentCompactions: func() int {
+			return 3
+		},
 		MemTableSize:                64 << 20, // 64 MB
 		MemTableStopWritesThreshold: 4,
 	})
