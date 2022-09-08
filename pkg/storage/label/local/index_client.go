@@ -183,7 +183,7 @@ func (b *indexClient) GetDB(name string, operation int) (*pebble.DB, error) {
 	}
 
 	// Open the database.
-	// Set Timeout to avoid obtaining file lock wait indefinitely.
+	// Store Timeout to avoid obtaining file lock wait indefinitely.
 	db, err := pebble.Open(path.Join(b.root, name), &pebble.Options{
 		// https://github.com/cockroachdb/pebble/issues/1068#issuecomment-784208214
 		L0CompactionThreshold: 2,

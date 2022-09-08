@@ -8,6 +8,7 @@ import (
 	"github.com/innoai-tech/runtime/cuepkg/tool"
 	"github.com/innoai-tech/runtime/cuepkg/node"
 	"github.com/innoai-tech/runtime/cuepkg/golang"
+	"github.com/innoai-tech/runtime/cuepkg/debian"
 	"github.com/innoai-tech/runtime/cuepkg/imagetool"
 )
 
@@ -42,10 +43,6 @@ auths: "ghcr.io": {
 mirror: {
 	linux: client.env.LINUX_MIRROR
 	pull:  client.env.CONTAINER_REGISTRY_PULL_PROXY
-}
-
-dependencies: {
-	"ghcr.io/innoai-tech/ffmpeg": "5"
 }
 
 client: filesystem: "internal": write: contents: actions.webapp.build.output
@@ -108,9 +105,7 @@ actions: go: golang.#Project & {
 	version:  "\(actions.version.output)"
 	revision: "\(client.env.GIT_SHA)"
 
-	// when disable cross-gcc will be installed
-	isolate: false
-	cgo:     true
+	cgo: true
 
 	goos: ["linux"]
 	goarch: ["amd64", "arm64"]
@@ -131,29 +126,29 @@ actions: go: golang.#Project & {
 		pre: [
 			"go mod download",
 		]
-		image: {
-			steps: [
-				imagetool.#ImageDep & {
-					// for cross compile need to load .so for all platforms
-					"platforms": [ for arch in goarch {
-						"linux/\(arch)"
-					}]
-					"dependencies": dependencies
-					"auths":        auths
-					"mirror":       mirror
-				},
-			]
-		}
+		image: steps: [
+			debian.#InstallPackage & {
+				packages: {
+					"libavformat-dev": _
+					"libavcodec-dev":  _
+					"libavutil-dev":   _
+					"libx264-dev":     _
+				}
+			},
+		]
 	}
 
 	ship: {
 		name: "\(strings.Replace(go.module, "github.com/", "ghcr.io/", -1))"
-		from: "gcr.io/distroless/cc-debian11:debug"
+		from: "docker.io/library/debian:bullseye-slim"
 		steps: [
-			imagetool.#ImageDep & {
-				"dependencies": dependencies
-				"auths":        auths
-				"mirror":       mirror
+			debian.#InstallPackage & {
+				packages: {
+					"libavcodec58":  _
+					"libavformat58": _
+					"libavutil56":   _
+					"libx264-160":   _
+				}
 			},
 		]
 		config: {

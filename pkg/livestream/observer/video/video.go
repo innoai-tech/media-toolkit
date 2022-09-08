@@ -2,14 +2,15 @@ package video
 
 import (
 	"context"
+	"github.com/innoai-tech/media-toolkit/pkg/format"
+	"github.com/innoai-tech/media-toolkit/pkg/storage/mime"
+	"os"
 	"time"
-
-	"github.com/deepch/vdk/av"
-	"github.com/innoai-tech/media-toolkit/pkg/storage"
-	"github.com/innoai-tech/media-toolkit/pkg/util/syncutil"
 
 	"github.com/go-logr/logr"
 	"github.com/innoai-tech/media-toolkit/pkg/livestream"
+	"github.com/innoai-tech/media-toolkit/pkg/storage"
+	"github.com/innoai-tech/media-toolkit/pkg/util/syncutil"
 )
 
 type Options struct {
@@ -18,89 +19,104 @@ type Options struct {
 
 type OptFunc func(o *Options)
 
-func New(ctx context.Context, ingester storage.Ingester, opts ...OptFunc) livestream.StreamObserver {
+func (o *Options) Apply(opts ...OptFunc) {
+	for i := range opts {
+		opts[i](o)
+	}
+}
+
+func New(ingester storage.Ingester, opts ...OptFunc) livestream.StreamObserver {
 	options := &Options{
 		MaxDuration: 60 * time.Second,
 	}
 
-	for i := range opts {
-		opts[i](options)
-	}
+	options.Apply(opts...)
 
 	return &videoObserver{
-		l:             logr.FromContextOrDiscard(ctx),
+		CloseNotifier: syncutil.NewCloseNotifier(),
 		ingester:      ingester,
 		options:       *options,
-		CloseNotifier: syncutil.NewCloseNotifier(),
 	}
 }
 
 type videoObserver struct {
 	options  Options
-	l        logr.Logger
 	ingester storage.Ingester
-	recorder syncutil.ValueMutex[*recorder]
 	syncutil.CloseNotifier
-	chPkt *syncutil.Chan[*av.Packet]
+}
+
+func (o *videoObserver) Close() error {
+	return o.CloseNotifier.Close()
+}
+
+func (o *videoObserver) Stop() error {
+	o.CloseNotifier.Shutdown(nil)
+	return nil
 }
 
 func (o *videoObserver) Name() string {
 	return "Video"
 }
 
-func (o *videoObserver) Close() error {
-	defer func() {
-		_ = o.CloseNotifier.Close()
-	}()
-	return o.Stop()
-}
+func (o *videoObserver) OnVideoSource(ctx context.Context, videoSource livestream.VideoSource) {
+	l := logr.FromContextOrDiscard(ctx)
 
-func (o *videoObserver) Stop() error {
-	if r := o.recorder.Get(); r != nil {
-		o.recorder.Set(nil)
-		o.chPkt.Close()
-		err := r.Commit(logr.NewContext(context.Background(), o.l))
-		o.CloseNotifier.SendDone(err)
-		return err
+	f, err := os.CreateTemp("", "video-")
+	if err != nil {
+		return
 	}
-	return nil
-}
 
-func (o *videoObserver) WritePacket(pkt livestream.Packet) {
-	ctx := logr.NewContext(context.Background(), o.l)
+	encodedReader, err := videoSource.NewEncodedReader(livestream.Preset1080P)
+	if err != nil {
+		return
+	}
 
-	if r := o.recorder.Get(); r == nil && pkt.IsKeyFrame {
-		// start record should start with when first key frame
-		r, err := newRecorder(ctx, o.ingester, pkt.ID, pkt.At, pkt.Codecs)
-		if err != nil {
-			o.l.Error(err, "start record failed")
-			return
-		}
+	r := format.NewRecorder(f, encodedReader, videoSource.ID())
 
-		o.recorder.Set(r)
+	timer := time.NewTimer(o.options.MaxDuration)
 
-		o.chPkt = syncutil.NewChan[*av.Packet]()
+	go func() {
+		var info *format.Info
 
-		go func() {
-			for p := range o.chPkt.Recv() {
-				if err := r.WritePacket(*p); err != nil {
-					o.l.Error(err, "write packet failed")
+		// close temp file
+		defer func() {
+			_ = f.Truncate(0)
+			_ = f.Close()
+		}()
+		// commit to ingres
+		defer func() {
+			if info == nil {
+				return
+			}
+
+			err := format.CommitTo(logr.NewContext(context.Background(), l), f, o.ingester, format.Info{
+				MediaType: mime.MediaTypeVideoMP4,
+				ID:        info.ID,
+				StartedAt: info.StartedAt,
+				At:        info.At,
+			})
+
+			if err != nil {
+				l.Error(err, "commit video failed")
+			}
+		}()
+		// close recorder
+		defer r.Close()
+
+		for {
+			select {
+			case <-timer.C:
+				return
+			case <-o.Done():
+				return
+			default:
+				i, err := r.Record()
+				if err != nil {
+					l.Error(err, "commit video failed")
+					return
 				}
+				info = i
 			}
-		}()
-
-		timer := time.NewTimer(o.options.MaxDuration)
-
-		go func() {
-			<-timer.C
-			o.l.Info("auto stop...")
-			if err := o.Stop(); err != nil {
-				o.l.Error(err, "stop")
-			}
-		}()
-	}
-
-	if r := o.recorder.Get(); r != nil {
-		o.chPkt.Send(&pkt.Packet)
-	}
+		}
+	}()
 }

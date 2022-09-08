@@ -52,7 +52,7 @@ func ParseExternalKey(ref string, expectUserID string) (Info, error) {
 	}
 	partsBytes = partsBytes[i+1:]
 
-	// Get alg
+	// Load alg
 	h, i = readOneHexPart(partsBytes)
 	if i == 0 || i+1 >= len(partsBytes) {
 		return Info{}, errors.Wrap(errors.Errorf("invalid ref `%s`", ref), "decoding alg")
@@ -60,7 +60,7 @@ func ParseExternalKey(ref string, expectUserID string) (Info, error) {
 	alg := unsafeGetString(h)
 	partsBytes = partsBytes[i+1:]
 
-	// Get hex
+	// Load hex
 	h, i = readOneHexPart(partsBytes)
 	if i == 0 {
 		h = partsBytes

@@ -3,6 +3,7 @@ package liveplayer
 import (
 	"context"
 	"fmt"
+	"github.com/innoai-tech/media-toolkit/pkg/livestream/core"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,13 +16,12 @@ import (
 	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/innoai-tech/media-toolkit/pkg/httputil"
-	"github.com/innoai-tech/media-toolkit/pkg/livestream"
 	"github.com/innoai-tech/media-toolkit/pkg/livestream/server"
 )
 
 type StreamPlayer struct {
 	Addr    string
-	Streams []livestream.Stream
+	Streams []core.Stream
 }
 
 func (p *StreamPlayer) Serve(ctx context.Context) error {
@@ -29,7 +29,7 @@ func (p *StreamPlayer) Serve(ctx context.Context) error {
 
 	router := mux.NewRouter()
 
-	lvs := server.NewLiveStreamServer(p.Streams)
+	lvs := server.NewLiveStreamServer(ctx, p.Streams)
 
 	router.PathPrefix("/api").Handler(lvs.Handler())
 	router.PathPrefix("/").Handler(WebUI)

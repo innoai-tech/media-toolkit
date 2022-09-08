@@ -1,16 +1,13 @@
 package livestream
 
 import (
+	"context"
 	"io"
 )
 
-type StreamNotifier interface {
-	WritePacket(pkt Packet)
-}
-
 type StreamObserver interface {
-	StreamNotifier
 	Name() string
+	OnVideoSource(ctx context.Context, videoSource VideoSource)
 	Done() <-chan error
 	io.Closer
 }

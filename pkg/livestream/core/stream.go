@@ -1,9 +1,15 @@
-package livestream
+package core
 
 import (
 	"encoding/json"
 	"os"
 )
+
+type Stream struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Rtsp string `json:"rtsp"`
+}
 
 func LoadStreams(configFile string) ([]Stream, error) {
 	jsonRaw, err := os.ReadFile(configFile)

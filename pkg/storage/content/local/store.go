@@ -187,10 +187,10 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 	fi, err := file.Stat()
 	closeErr := file.Close()
 	if err != nil {
-		return fmt.Errorf("stat on ingest file failed: %w", err)
+		return fmt.Errorf("stat on from file failed: %w", err)
 	}
 	if closeErr != nil {
-		return fmt.Errorf("failed to close ingest file: %w", closeErr)
+		return fmt.Errorf("failed to close from file: %w", closeErr)
 	}
 
 	if size > 0 && size != fi.Size() {
@@ -203,7 +203,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 	}
 
 	var (
-		ingest = filepath.Join(w.path, "data")
+		from   = filepath.Join(w.path, "data")
 		target = w.Info().BlobPath(w.s.root)
 	)
 
@@ -212,12 +212,12 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 		return err
 	}
 
-	if err := os.Rename(ingest, target); err != nil {
+	if err := os.Rename(from, target); err != nil {
 		return err
 	}
 
 	if err := os.RemoveAll(w.path); err != nil {
-		logr.FromContextOrDiscard(ctx).WithValues("path", w.path).Error(errors.New("failed to remove ingest directory"), "")
+		logr.FromContextOrDiscard(ctx).WithValues("path", w.path).Error(errors.New("failed to remove from directory"), "")
 	}
 
 	return nil

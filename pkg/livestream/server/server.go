@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"github.com/go-logr/logr"
+	"github.com/innoai-tech/media-toolkit/pkg/livestream/core"
 	"net/http"
 	"sort"
 
@@ -16,11 +18,11 @@ import (
 	"github.com/innoai-tech/media-toolkit/pkg/livestream"
 )
 
-func NewLiveStreamServer(streams []livestream.Stream) *LiveStreamServer {
+func NewLiveStreamServer(ctx context.Context, streams []core.Stream) *LiveStreamServer {
 	hub := livestream.NewStreamHub()
 
 	for i := range streams {
-		hub.AddStream(streams[i])
+		hub.AddStream(logr.NewContext(ctx, logr.FromContextOrDiscard(ctx)), streams[i])
 	}
 
 	// TODO handle error

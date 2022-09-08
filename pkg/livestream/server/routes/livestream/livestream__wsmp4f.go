@@ -53,7 +53,7 @@ func (ug *upgrader) Upgrade(rw http.ResponseWriter, req *http.Request) error {
 	}
 	defer c.Close()
 
-	sub, err := ug.hub.Subscribe(ctx, ug.id, wsmp4f.New(ctx, &wsWriter{c: c}))
+	sub, err := ug.hub.Subscribe(ctx, ug.id, wsmp4f.New(&wsWriter{c: c}))
 	if err != nil {
 		logr.FromContextOrDiscard(ctx).Error(err, "subscribe failed")
 		return err

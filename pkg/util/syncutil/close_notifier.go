@@ -17,7 +17,7 @@ func (c *CloseNotifier) Closed() bool {
 	return atomic.LoadUint32(&c.closed) != 0
 }
 
-func (c *CloseNotifier) SendDone(err error) {
+func (c *CloseNotifier) Shutdown(err error) {
 	if atomic.LoadUint32(&c.closed) == 0 {
 		c.done <- err
 	}

@@ -25,7 +25,7 @@ func (req *LiveStreamTakeVideo) Output(ctx context.Context) (any, error) {
 	hub := livestream.StreamHubFromContext(ctx)
 	store := storage.StoreFromContext(ctx)
 
-	s, err := hub.Subscribe(ctx, req.ID, livestream.WithUniqueKey("Recording", video.New(ctx, store, func(o *video.Options) {
+	s, err := hub.Subscribe(ctx, req.ID, livestream.WithUniqueKey(req.ID, video.New(store, func(o *video.Options) {
 		o.MaxDuration = 60 * 10 * time.Second
 	})))
 	if err != nil {

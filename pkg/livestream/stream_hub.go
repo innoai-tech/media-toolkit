@@ -3,6 +3,8 @@ package livestream
 import (
 	"context"
 	"fmt"
+	"github.com/innoai-tech/media-toolkit/pkg/livestream/core"
+	"github.com/innoai-tech/media-toolkit/pkg/util/syncutil"
 	"io"
 	"net/http"
 
@@ -16,32 +18,26 @@ var (
 	StreamNotFound = errors.New("stream not found")
 )
 
-type Stream struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Rtsp string `json:"rtsp"`
-}
-
 func NewStreamHub() *StreamHub {
 	return &StreamHub{}
 }
 
 type StreamHub struct {
-	streams XMap[string, StreamSubject]
+	streams syncutil.Map[string, StreamSubject]
 }
 
-func (hub *StreamHub) List() []Stream {
-	list := make([]Stream, 0)
+func (hub *StreamHub) List() []core.Stream {
+	list := make([]core.Stream, 0)
 	hub.streams.Range(func(_, value any) bool {
 		list = append(list, value.(StreamSubject).Info())
 		return true
 	})
-	slices.SortFunc(list, func(a, b Stream) bool { return a.ID < b.ID })
+	slices.SortFunc(list, func(a, b core.Stream) bool { return a.ID < b.ID })
 	return list
 }
 
-func (hub *StreamHub) AddStream(s Stream) {
-	hub.streams.Store(s.ID, NewStreamSubject(s))
+func (hub *StreamHub) AddStream(ctx context.Context, s core.Stream) {
+	hub.streams.Store(s.ID, NewStreamSubject(ctx, s))
 }
 
 func (hub *StreamHub) Status(ctx context.Context, id string) (Status, error) {

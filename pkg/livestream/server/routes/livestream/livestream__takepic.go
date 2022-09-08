@@ -23,7 +23,7 @@ func (req *LiveStreamTakePic) Output(ctx context.Context) (any, error) {
 	hub := livestream.StreamHubFromContext(ctx)
 	store := storage.StoreFromContext(ctx)
 
-	_, err := hub.Subscribe(ctx, req.ID, image.New(ctx, store))
+	_, err := hub.Subscribe(ctx, req.ID, image.New(store))
 	if err != nil {
 		return nil, err
 	}
