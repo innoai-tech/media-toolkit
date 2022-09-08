@@ -5,6 +5,8 @@ export class MP4fSourceBuffer {
   ): MP4fSourceBuffer => {
     const mimeCodec = `video/mp4; codecs="${codecs}"`;
 
+    console.log(mimeCodec);
+
     if (!MediaSource.isTypeSupported(mimeCodec)) {
       // TODO added transform
       throw `unsupported ${mimeCodec}`;
@@ -141,7 +143,6 @@ export class WsMP4fPlayer {
           const evt = new CustomEvent("METADATA", {
             detail: JSON.parse(new TextDecoder("utf-8").decode(data.slice(1)))
           });
-
           this.$video && this.$video.dispatchEvent(evt);
         } else {
           buf?.writePacket(data);

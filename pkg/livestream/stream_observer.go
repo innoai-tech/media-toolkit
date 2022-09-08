@@ -1,16 +1,13 @@
 package livestream
 
 import (
+	"github.com/pion/mediadevices"
 	"io"
 )
 
-type StreamNotifier interface {
-	WritePacket(pkt Packet)
-}
-
 type StreamObserver interface {
-	StreamNotifier
 	Name() string
+	OnVideoSource(videoSource mediadevices.VideoSource)
 	Done() <-chan error
 	io.Closer
 }

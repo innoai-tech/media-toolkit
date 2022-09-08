@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"context"
+	"github.com/innoai-tech/media-toolkit/pkg/livestream/core"
 
 	"github.com/innoai-tech/infra/pkg/cli"
 	"github.com/innoai-tech/media-toolkit/internal/liveplayer"
-	"github.com/innoai-tech/media-toolkit/pkg/livestream"
 )
 
 func init() {
@@ -23,7 +23,7 @@ type Serve struct {
 }
 
 func (p *Serve) Run(ctx context.Context) error {
-	streams, err := livestream.LoadStreams(p.ConfigFile)
+	streams, err := core.LoadStreams(p.ConfigFile)
 	if err != nil {
 		return err
 	}

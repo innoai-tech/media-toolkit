@@ -3,12 +3,16 @@ package livestream
 import (
 	"context"
 	"fmt"
+	"github.com/innoai-tech/media-toolkit/pkg/livestream/core"
+	"github.com/innoai-tech/media-toolkit/pkg/mediadevice/rtsp"
+	"github.com/pion/mediadevices"
+	"github.com/pion/mediadevices/pkg/io/video"
+	"image"
 	"io"
 	"sync"
 	"time"
 
 	"github.com/deepch/vdk/av"
-	"github.com/deepch/vdk/format/rtspv2"
 	"github.com/go-logr/logr"
 	"github.com/innoai-tech/media-toolkit/pkg/util/syncutil"
 	"github.com/pkg/errors"
@@ -16,12 +20,13 @@ import (
 
 var (
 	StreamExitNoVideoOnStream = errors.New("stream exit no video on stream")
+	StreamExitCodecChanged    = errors.New("stream exit when codec changed")
 	StreamExitRtspDisconnect  = errors.New("stream exit rtsp disconnect")
 	StreamExitIdleTimeout     = errors.New("stream exit idle timeout")
 )
 
 type StreamSubject interface {
-	Info() Stream
+	Info() core.Stream
 	Status() Status
 	Subscribe(ctx context.Context, o StreamObserver) (io.Closer, error)
 }
@@ -40,9 +45,9 @@ type Metadata struct {
 
 type Packet struct {
 	Codecs []av.CodecData `json:"codecs,omitempty"`
-
-	Metadata
 	av.Packet
+	Frame image.Image
+	Metadata
 }
 
 func (p Packet) Clone() Packet {
@@ -52,19 +57,16 @@ func (p Packet) Clone() Packet {
 	return p
 }
 
-func NewStreamSubject(stream Stream) StreamSubject {
+func NewStreamSubject(stream core.Stream) StreamSubject {
 	return &streamSubject{
 		stream: stream,
 	}
 }
 
 type streamSubject struct {
-	stream Stream
-
+	stream    core.Stream
+	worker    syncutil.ValueMutex[*videoSource]
 	observers sync.Map
-
-	worker syncutil.ValueMutex[*rtspWorker]
-	codecs syncutil.ValueMutex[[]av.CodecData]
 }
 
 func (s *streamSubject) Close() error {
@@ -88,39 +90,16 @@ func (s *streamSubject) Subscribe(ctx context.Context, o StreamObserver) (io.Clo
 		}
 	}
 
-	l := logr.FromContextOrDiscard(ctx).WithValues(
-		"stream_id", s.stream.ID, "stream_name", s.stream.Name,
-	)
+	l := logr.FromContextOrDiscard(ctx).WithValues("stream_id", s.stream.ID, "stream_name", s.stream.Name)
 
 	// try to serve rtspWorker when observer add
 	if w := s.worker.Get(); w == nil {
-		w := s.worker.Set(&rtspWorker{
-			CloseNotifier: syncutil.NewCloseNotifier(),
-		})
-
+		w := s.worker.Set(newVideoSource(logr.NewContext(ctx, l), s.stream))
 		go func() {
-			for {
-				l.Info("starting...")
-
-				err := w.serve(s.stream.Rtsp, s, func() Metadata {
-					status := s.Status()
-
-					return Metadata{
-						ID:        s.stream.ID,
-						Name:      s.stream.Name,
-						Observers: status.Observers,
-					}
-				})
-				if err == nil {
-					break
-				}
-				l.Error(err, "rtspWorker exit error")
-				if err == StreamExitRtspDisconnect {
-					time.Sleep(3 * time.Second)
-					l.Info("will reconnect 3s later")
-					continue
-				}
-				break
+			defer w.Close()
+			err := <-w.Done()
+			if err != nil {
+				l.Error(err, "video source exit error")
 			}
 			s.worker.Set(nil)
 		}()
@@ -132,6 +111,8 @@ func (s *streamSubject) Subscribe(ctx context.Context, o StreamObserver) (io.Clo
 	}
 
 	go func() {
+		ss.OnVideoSource(s.worker.Get())
+
 		for {
 			select {
 			case _ = <-ss.Done():
@@ -167,13 +148,6 @@ func (s *streamObserverWrapper) Close() error {
 	return s.StreamObserver.Close()
 }
 
-func (s *streamSubject) WritePacket(pkt Packet) {
-	s.observers.Range(func(_, value any) bool {
-		value.(StreamObserver).WritePacket(pkt)
-		return true
-	})
-}
-
 func (s *streamSubject) HasObserver() bool {
 	observerCount := 0
 	s.observers.Range(func(_, value any) bool {
@@ -199,113 +173,57 @@ func (s *streamSubject) Status() Status {
 	return status
 }
 
-func (s *streamSubject) Info() Stream {
+func (s *streamSubject) Info() core.Stream {
 	return s.stream
 }
 
-type rtspWorker struct {
+func newVideoSource(ctx context.Context, stream core.Stream) *videoSource {
+	return &videoSource{
+		CloseNotifier: syncutil.NewCloseNotifier(),
+		l:             logr.FromContextOrDiscard(ctx),
+		stream:        stream,
+		idleTimeout:   30 * time.Second,
+	}
+}
+
+type videoSource struct {
+	l      logr.Logger
+	stream core.Stream
 	syncutil.CloseNotifier
+	r           video.Reader
+	videoSource mediadevices.VideoSource
+	idleTimeout time.Duration
+	idleTimer   *time.Timer
 }
 
-func (s *rtspWorker) dial(rtspURL string) (*rtspv2.RTSPClient, error) {
-	return rtspv2.Dial(rtspv2.RTSPClientOptions{
-		URL:                rtspURL,
-		DialTimeout:        10 * time.Second,
-		ReadWriteTimeout:   10 * time.Second,
-		DisableAudio:       true,
-		InsecureSkipVerify: true,
-		Debug:              false,
-	})
+func (s *videoSource) Close() error {
+	if !s.CloseNotifier.Closed() {
+		defer func() {
+			_ = s.CloseNotifier.Close()
+		}()
+		s.l.Info("shutting down...")
+		return s.videoSource.Close()
+	}
+	return nil
 }
 
-func (s *rtspWorker) serve(rtspURL string, observer StreamNotifier, getMeta func() Metadata) error {
-	s.Reset()
+func (s *videoSource) ID() string {
+	return s.stream.ID
+}
 
-	c, err := s.dial(rtspURL)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		s.SendDone(err)
-		c.Close()
-	}()
-
-	idleTimeout := 60 * time.Second
-	keyTimeout := 30 * time.Second
-
-	keyTimer := time.NewTimer(keyTimeout)
-	idleTimer := time.NewTimer(idleTimeout)
-
-	var audioOnly bool
-
-	codecData := c.CodecData
-	if codecData != nil {
-		if len(codecData) == 1 {
-			if codecData[0].Type().IsAudio() {
-				audioOnly = true
-			}
+func (s *videoSource) Read() (img image.Image, release func(), err error) {
+	if s.videoSource == nil {
+		s.l.Info("starting...")
+		ctx, _ := context.WithTimeout(context.Background(), s.idleTimeout)
+		vs, err := rtsp.Open(ctx, s.stream.Rtsp, s.stream.ID)
+		if err != nil {
+			return nil, func() {}, err
 		}
+		s.videoSource = vs
+		s.r = video.NewBroadcaster(vs, nil).NewReader(true)
+		s.idleTimer = time.NewTimer(s.idleTimeout)
 	}
 
-	var packetStartedAt *time.Time
-	var packetStartedDur time.Duration
-
-	timelines := make(map[int8]time.Duration)
-
-	var lastAvp *av.Packet
-
-	for {
-		select {
-		case <-s.Done():
-			return nil
-		case <-idleTimer.C:
-			return StreamExitIdleTimeout
-		case <-keyTimer.C:
-			return StreamExitNoVideoOnStream
-		case signals := <-c.Signals:
-			switch signals {
-			case rtspv2.SignalCodecUpdate:
-				codecData = c.CodecData
-			case rtspv2.SignalStreamRTPStop:
-				return StreamExitRtspDisconnect
-			}
-		case avp := <-c.OutgoingPacketQueue:
-			if audioOnly || avp.IsKeyFrame {
-				keyTimer.Reset(keyTimeout)
-			}
-
-			if can, ok := observer.(interface{ HasObserver() bool }); ok {
-				if can.HasObserver() {
-					idleTimer.Reset(idleTimeout)
-				}
-			}
-
-			timelines[avp.Idx] += avp.Duration
-			avp.Time = timelines[avp.Idx]
-
-			if packetStartedAt == nil {
-				t := time.Now()
-				packetStartedAt = &t
-				packetStartedDur = avp.Time
-			}
-
-			if lastAvp != nil && avp.Time < lastAvp.Time {
-				fmt.Println("invalid avp", lastAvp.Time)
-				// ignore invalid frame
-				continue
-			}
-
-			meta := getMeta()
-			meta.At = packetStartedAt.Add(avp.Time - packetStartedDur)
-
-			observer.WritePacket(Packet{
-				Metadata: meta,
-				Codecs:   codecData,
-				Packet:   *avp,
-			})
-
-			lastAvp = avp
-		}
-	}
+	s.idleTimer.Reset(s.idleTimeout)
+	return s.r.Read()
 }

@@ -6,10 +6,6 @@ debug:
 	dagger do build web
 .PHONY: debug
 
-build:
-	dagger do build
-.PHONY: build
-
 ship:
 	dagger do webapp build
 	dagger do go ship pushx
@@ -26,20 +22,20 @@ build.web:
 lint.web:
 	pnpm exec turbo run lint --force
 
-MTK = go run ./cmd/mtk
+MTK = CGO_ENABLED=1 go run ./cmd/mtk
 
 dep:
 	go get -u -t ./pkg/...
 
 serve:
-	CGO_ENABLED=1 $(MTK) -v1 serve -c .tmp/streams.json
+	$(MTK) -v1 serve -c .tmp/streams.json
 
 serve.debug:
 	docker run \
 		-it \
 		-v=$(PWD)/.tmp:/.tmp \
 		-p=777:777 \
-		ghcr.io/innoai-tech/media-toolkit:dev -v1 serve -c .tmp/streams.json
+		ghcr.io/innoai-tech/media-toolkit@sha256:b3d49a06bc5d9ecf1670d440429169669bb6c1a76ab0ae4d3a507f8a4deb73e9 -v1 serve -c .tmp/streams.json
 
 devkit:
 	dagger do go devkit load/linux/arm64
@@ -91,3 +87,6 @@ export.kubepkg:
 
 import.debug: export.kubepkg
 	kubepkg import -i=http://local-dev.office:36060 --incremental .tmp/local-dev.yaml
+
+local.rtp:
+	go run ./cmd/localasrtp 0.0.0.0:577

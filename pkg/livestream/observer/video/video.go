@@ -5,11 +5,10 @@ import (
 	"time"
 
 	"github.com/deepch/vdk/av"
-	"github.com/innoai-tech/media-toolkit/pkg/storage"
-	"github.com/innoai-tech/media-toolkit/pkg/util/syncutil"
-
 	"github.com/go-logr/logr"
 	"github.com/innoai-tech/media-toolkit/pkg/livestream"
+	"github.com/innoai-tech/media-toolkit/pkg/storage"
+	"github.com/innoai-tech/media-toolkit/pkg/util/syncutil"
 )
 
 type Options struct {
@@ -41,7 +40,7 @@ type videoObserver struct {
 	ingester storage.Ingester
 	recorder syncutil.ValueMutex[*recorder]
 	syncutil.CloseNotifier
-	chPkt *syncutil.Chan[*av.Packet]
+	chPkt *syncutil.Chan[av.Packet]
 }
 
 func (o *videoObserver) Name() string {
@@ -79,11 +78,11 @@ func (o *videoObserver) WritePacket(pkt livestream.Packet) {
 
 		o.recorder.Set(r)
 
-		o.chPkt = syncutil.NewChan[*av.Packet]()
+		o.chPkt = syncutil.NewChan[av.Packet]()
 
 		go func() {
 			for p := range o.chPkt.Recv() {
-				if err := r.WritePacket(*p); err != nil {
+				if err := r.WritePacket(p); err != nil {
 					o.l.Error(err, "write packet failed")
 				}
 			}
@@ -101,6 +100,6 @@ func (o *videoObserver) WritePacket(pkt livestream.Packet) {
 	}
 
 	if r := o.recorder.Get(); r != nil {
-		o.chPkt.Send(&pkt.Packet)
+		o.chPkt.Send(pkt.Packet)
 	}
 }

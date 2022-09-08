@@ -22,7 +22,7 @@ func New(ctx context.Context, w io.Writer) livestream.StreamObserver {
 type wsmp4f struct {
 	w     io.Writer
 	l     logr.Logger
-	chPkt *syncutil.Chan[*livestream.Packet]
+	chPkt *syncutil.Chan[livestream.Packet]
 	once  syncutil.Once
 	syncutil.CloseNotifier
 }
@@ -57,6 +57,8 @@ func (w *wsmp4f) WritePacket(pkt livestream.Packet) {
 			_ = w.once.Do(func() error {
 				muxer := mp4f.NewMuxer(nil)
 
+				muxer.SetMaxFrames(1)
+
 				if err := muxer.WriteHeader(codecs); err != nil {
 					w.l.Error(err, "muxer.WriteHeader")
 					return err
@@ -73,7 +75,7 @@ func (w *wsmp4f) WritePacket(pkt livestream.Packet) {
 					return err
 				}
 
-				w.chPkt = syncutil.NewChan[*livestream.Packet]()
+				w.chPkt = syncutil.NewChan[livestream.Packet]()
 
 				go func() {
 					for p := range w.chPkt.Recv() {
@@ -104,7 +106,7 @@ func (w *wsmp4f) WritePacket(pkt livestream.Packet) {
 		}
 
 		if w.once.Ready() {
-			w.chPkt.Send(&pkt)
+			w.chPkt.Send(pkt)
 		}
 	}
 }

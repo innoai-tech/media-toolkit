@@ -39,10 +39,10 @@ func newRecorder(ctx context.Context, s storage.Ingester, id string, from time.T
 }
 
 type recorder struct {
-	ingester storage.Ingester
 	id       string
 	from     time.Time
 	tmp      *os.File
+	ingester storage.Ingester
 	*mp4.Muxer
 }
 
