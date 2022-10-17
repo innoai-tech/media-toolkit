@@ -36,6 +36,7 @@ func Open(ctx context.Context, rtsp string, id string) (conn *RTSPConnect, err e
 		}
 
 		opts := (*C.AVDictionary)(nil)
+		C.av_dict_set(&opts, C.CString("fflags"), C.CString("nobuffer"), 0)
 		C.av_dict_set(&opts, C.CString("rtsp_transport"), C.CString("tcp"), 0)
 
 		if ret := C.avformat_open_input(&formatCtx, C.CString(rtsp), nil, &opts); int(ret) < 0 {
