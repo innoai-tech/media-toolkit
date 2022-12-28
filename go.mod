@@ -23,7 +23,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/common v0.37.0
 	github.com/prometheus/prometheus v0.38.0
-	github.com/rs/cors v1.8.2
+	github.com/rs/cors v1.8.3
 	golang.org/x/exp v0.0.0-20220916125017-b168a2c6b86b
 	golang.org/x/sync v0.0.0-20220907140024-f12130a52804
 )
