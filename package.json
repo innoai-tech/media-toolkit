@@ -20,7 +20,7 @@
     "@innoai-tech/vite-presets": "^0.1.2",
     "@swc/core": "^1.2.249",
     "core-js": "^3.25.1",
-    "esbuild": "^0.15.7",
+    "esbuild": "^0.17.5",
     "rome": "next",
     "tsx": "^3.9.0",
     "turbo": "^1.4.6",
