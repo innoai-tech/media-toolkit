@@ -21,18 +21,18 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/pion/mediadevices v0.3.11
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/common v0.37.0
-	github.com/prometheus/prometheus v0.38.0
+	github.com/prometheus/common v0.39.0
+	github.com/prometheus/prometheus v0.42.0
 	github.com/rs/cors v1.8.2
-	golang.org/x/exp v0.0.0-20220916125017-b168a2c6b86b
-	golang.org/x/sync v0.0.0-20220907140024-f12130a52804
+	golang.org/x/exp v0.0.0-20230124195608-d38c7dcee874
+	golang.org/x/sync v0.1.0
 )
 
 require (
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cockroachdb/errors v1.9.0 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20211118104740-dabe8e521a4f // indirect
 	github.com/cockroachdb/redact v1.1.3 // indirect
@@ -49,14 +49,14 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
-	github.com/grafana/regexp v0.0.0-20220304095617-2e8d9baf4ac2 // indirect
+	github.com/grafana/regexp v0.0.0-20221122212121-6b5c0a4cb7fd // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/klauspost/compress v1.15.10 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/onsi/gomega v1.19.0 // indirect
 	github.com/pion/datachannel v1.5.2 // indirect
 	github.com/pion/dtls/v2 v2.1.5 // indirect
@@ -76,24 +76,24 @@ require (
 	github.com/pion/udp v0.1.1 // indirect
 	github.com/pion/webrtc/v3 v3.1.44 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.13.0 // indirect
-	github.com/prometheus/client_model v0.2.0 // indirect
+	github.com/prometheus/client_golang v1.14.0 // indirect
+	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/smartystreets/assertions v1.13.0 // indirect
 	github.com/spf13/cobra v1.4.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/testify v1.8.0 // indirect
+	github.com/stretchr/testify v1.8.1 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/goleak v1.2.0 // indirect
-	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
+	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69 // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
-	golang.org/x/sys v0.0.0-20220915200043-7b5979e65e41 // indirect
-	golang.org/x/tools v0.1.12 // indirect
-	google.golang.org/genproto v0.0.0-20220916172020-2692e8806bfa // indirect
-	google.golang.org/grpc v1.49.0 // indirect
+	golang.org/x/mod v0.7.0 // indirect
+	golang.org/x/net v0.5.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/tools v0.5.0 // indirect
+	google.golang.org/genproto v0.0.0-20230124163310-31e0e69b6fc2 // indirect
+	google.golang.org/grpc v1.52.1 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
