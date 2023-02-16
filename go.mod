@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/cockroachdb/pebble v0.0.0-20220916170419-c04d128767e6
-	github.com/containerd/containerd v1.6.8
+	github.com/containerd/containerd v1.6.18
 	github.com/davecgh/go-spew v1.1.1
 	github.com/deepch/vdk v0.0.20-0.20220804181138-61aa8e4f724c
 	github.com/go-courier/courier v1.5.0
@@ -56,7 +56,7 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/onsi/gomega v1.19.0 // indirect
 	github.com/pion/datachannel v1.5.2 // indirect
 	github.com/pion/dtls/v2 v2.1.5 // indirect
